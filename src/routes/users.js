@@ -1,12 +1,15 @@
 const express = require('express');
 
 const userHelper = require('../helper/user_helper')
-const validateUser = require("../validate/users_validate")
+const validateUser = require("../validate/users_validate");
+const pool = require('../database/pool');
+const jwt = require('jsonwebtoken');
+const { ref } = require('joi');
 
 const router = express.Router();
 
 // Welcoming to users
-router.get('/', (req,res)=>{
+router.get('/', (req, res) => {
     res.status(200).json({
         Message: "Welcome to Users"
     })
@@ -15,7 +18,7 @@ router.get('/', (req,res)=>{
 
 
 // login to system
-router.post("/login",  async (req,res)=>{
+router.post("/login", async (req, res) => {
     const userData = {
         username: req.body.username,
         password: req.body.password
@@ -24,19 +27,92 @@ router.post("/login",  async (req,res)=>{
 
     try {
         const validate = await validateUser.validateLogin(userData)
-
         const results = await userHelper.userLogin(userData)
-        res.status(200).json(results)
+
+        if (results?.status === true) {
+            res.cookie('jwt', results.data.refreshToken, {
+                httpOnly: true,
+                maxAge: 30 * 24 * 60 * 60 * 1000
+            })
+            res.json({
+                status: true,
+                message: "You are signed in",
+                data: {
+                    token: results.data.accessToken,
+                    user: results.data.user
+                }
+            })
+        } else {
+            res.status(200).json(results)
+        }
 
     } catch (error) {
-        res.status(500).json(error)
+        res.status(403).json(error)
     }
 })
 
-// Get user Data
-router.get("/:userId", userHelper.verifyToken, async (req, res)=>{
-    const userId = req.params.userId
+router.post('/refresh', async (req, res, next) => {
+    const cookies = req.cookies
+    if (!cookies?.jwt) return res.status(401).json({
+        status: false,
+        message: "No refesh token exists"
+    })
 
+    try {
+        const refreshToken = cookies.jwt
+        const result = await userHelper.refresh(refreshToken)
+
+        if (result?.status === true) {
+            res.status(200).json(result)
+        } else {
+            res.status(200).json(result)
+        }
+
+
+    } catch (error) {
+        res.status(401).json(error)
+    }
+
+})
+
+router.get('/logout', async (req, res, next) => {
+    const cookies = req.cookies
+    if (!cookies?.jwt) return res.status(401).json({
+        status: false,
+        message: "No refesh token exists"
+    })
+
+    try {
+        const refreshToken = cookies.jwt
+        const result = await userHelper.logout(refreshToken)
+
+        if (result?.status === true) {
+            res.clearCookie('jwt', { httpOnly: true, })
+            res.status(200).json({
+                status: true,
+                message: "User Loged out successfully"
+            })
+        } else {
+            res.status(401).json({
+                status: false,
+                message: "Logout error"
+            })
+
+        }
+
+
+    } catch (error) {
+        res.status(401).json(error)
+    }
+
+
+
+})
+
+// Get user Data
+router.get("/:userId", userHelper.verifyToken, async (req, res) => {
+
+    const userId = req.params.userId
 
     try {
         const validate = await validateUser.validateInt(userId)
@@ -46,17 +122,17 @@ router.get("/:userId", userHelper.verifyToken, async (req, res)=>{
         res.status(200).json(user)
 
     } catch (error) {
-        res.status(500).json({Message : error})
+        res.status(500).json({ Message: error })
     }
 })
 
 // Add User
-router.post("/", async (req, res)=>{
+router.post("/", async (req, res) => {
     const userData = {
-        username : req.body.username,
-        name : req.body.name,
-        password : req.body.password,
-        isAdmin : req.body.is_admin ? 1 : 0
+        username: req.body.username,
+        name: req.body.name,
+        password: req.body.password,
+        isAdmin: req.body.is_admin ? 1 : 0
     }
 
 
@@ -71,16 +147,16 @@ router.post("/", async (req, res)=>{
 
 
     } catch (error) {
-        res.status(500).json({Message : error})
+        res.status(500).json({ Message: error })
     }
 })
 
 // Change User password
-router.put("/:userId/edit_password", userHelper.verifyToken, async (req, res)=>{
+router.put("/:userId/edit_password", userHelper.verifyToken, async (req, res) => {
     const data = {
-        userId : req.params.userId,
-        oldPassword : req.body.old_password,
-        newPassword : req.body.new_password
+        userId: req.params.userId,
+        oldPassword: req.body.old_password,
+        newPassword: req.body.new_password
     }
 
     try {
@@ -95,12 +171,12 @@ router.put("/:userId/edit_password", userHelper.verifyToken, async (req, res)=>{
         )
 
         res.status(200).json({
-            Message : "Password succesfully updated",
-            token : token
+            Message: "Password succesfully updated",
+            token: token
         })
 
     } catch (error) {
-        res.status(500).json({Message : error})
+        res.status(500).json({ Message: error })
     }
 })
 

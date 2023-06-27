@@ -2,14 +2,16 @@ const express = require('express');
 
 const app = express()
 
-require('dotenv').config()
 
 var morgan = require('morgan')
-app.use(morgan('dev'))
-
 var cors = require('cors')
-app.use(cors())
+const cookieParser = require('cookie-parser')
 
+require('dotenv').config()
+app.use(morgan('dev'))
+app.use(cors())
+app.use(cookieParser())
+app.use(express.json())
 
 
 
@@ -23,7 +25,6 @@ const receivableRouter = require("./routes/accounts_receivable")
 const expensesRouter = require("./routes/accounts_expenses")
 const inventoryRouter = require("./routes/inventory")
 
-app.use(express.json())
 
 app.use("/api/users", userRoute)
 app.use("/api/products/", productRouter)
@@ -35,7 +36,7 @@ app.use("/api/accounts/expenses/", expensesRouter)
 app.use("/api/inventory/", inventoryRouter)
 
 
-app.get('/', (req,res)=>{
+app.get('/', (req, res) => {
     res.status(200).json({
         Message: "Welcome to API"
     })
@@ -49,10 +50,10 @@ app.use((err, req, res, next) => {
     })
 });
 
-  
 
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, ()=>{
+
+const PORT = process.env.PORT || 3005;
+app.listen(PORT, () => {
     console.log(`Running Bride's Furnishings API server on port ${PORT}`);
 })
