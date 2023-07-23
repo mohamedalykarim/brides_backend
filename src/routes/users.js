@@ -2,9 +2,6 @@ const express = require('express');
 
 const userHelper = require('../helper/user_helper')
 const validateUser = require("../validate/users_validate");
-const pool = require('../database/pool');
-const jwt = require('jsonwebtoken');
-const { ref } = require('joi');
 
 const router = express.Router();
 
@@ -65,12 +62,12 @@ router.post('/refresh', async (req, res, next) => {
         if (result?.status === true) {
             res.status(200).json(result)
         } else {
-            res.status(200).json(result)
+            res.status(403).json(result)
         }
 
 
     } catch (error) {
-        res.status(401).json(error)
+        res.status(403).json(error)
     }
 
 })

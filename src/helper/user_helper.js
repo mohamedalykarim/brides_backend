@@ -3,7 +3,7 @@ const pool = require("../database/pool")
 const bcrypt = require("bcrypt")
 const userErrors = require("../errors/user_errors")
 
-const ACCESS_TOKEN_EXPIRE_TIME = "6m"
+const ACCESS_TOKEN_EXPIRE_TIME = "30s"
 
 const userLogin = async (userData) => {
 
@@ -91,29 +91,28 @@ const userLogin = async (userData) => {
 }
 
 const verifyToken = async (req, res, next) => {
-    return new Promise((RESOLVE, REJECT) => {
-        const authHeaders = req.headers['authorization'];
-        if (!authHeaders) return res.status(403).json({
-            status: false,
-            message: "Auth error"
-        })
+    console.log("testing from verify token");
 
-        const token = authHeaders.split(' ')[1]
-        jwt.verify(
-            token,
-            process.env.ACCESS_TOKEN_SECRET,
-            (error, decoded) => {
-                if (error) return res.status(403).json({
-                    status: false,
-                    message: error.message
-                })
-
-                req.user = decoded
-                next()
-            }
-        )
-
+    const authHeaders = req.headers['authorization'];
+    if (!authHeaders) return res.status(403).json({
+        status: false,
+        message: "Auth error"
     })
+
+    const token = authHeaders.split(' ')[1]
+    jwt.verify(
+        token,
+        process.env.ACCESS_TOKEN_SECRET,
+        (error, decoded) => {
+            if (error) return res.status(403).json({
+                status: false,
+                message: error.message
+            })
+
+            req.user = decoded
+            next()
+        }
+    )
 
 
 }

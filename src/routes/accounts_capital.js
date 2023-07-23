@@ -10,11 +10,11 @@ const accountCapitalHelper = require("../helper/account_capital_helper")
 const router = express.Router();
 
 // Add to capital account
-router.post("/", userHelper.verifyToken, async (req, res)=>{
+router.post("/", userHelper.verifyToken, async (req, res) => {
     const data = {
         transactionDetails: req.body.transaction_details,
-        valueCredit : req.body.value_credit,
-        valueDebit : req.body.value_debit
+        valueCredit: req.body.value_credit,
+        valueDebit: req.body.value_debit
     }
 
     try {
@@ -31,20 +31,21 @@ router.post("/", userHelper.verifyToken, async (req, res)=>{
 })
 
 // Get ALL capital account
-router.get("/", userHelper.verifyToken, async (req, res)=>{
+router.get("/", async (req, res) => {
+    console.log("testing from get all capital");
     try {
-        const isAdmin = await validateUser.checkIsAdmin(req.userData)
+        const isAdmin = await validateUser.checkIsAdmin(req.user)
         const allTransactions = await accountCapitalHelper.getAllFromCapitalAccount()
 
         res.status(200).json(allTransactions)
-        
+
     } catch (error) {
         res.status(500).json(error)
     }
 })
 
 // Get a transaction from capital accont
-router.get("/:capitalTransactionId", userHelper.verifyToken, async (req, res)=>{
+router.get("/:capitalTransactionId", userHelper.verifyToken, async (req, res) => {
     const transactionId = req.params.capitalTransactionId
     try {
         const validate = await validateCapital.validatGetFromCapitalAccount(transactionId)
@@ -60,13 +61,13 @@ router.get("/:capitalTransactionId", userHelper.verifyToken, async (req, res)=>{
 })
 
 // Edit transaction of capital account 
-router.put("/:capitalTransactionId", userHelper.verifyToken, async (req, res)=>{
+router.put("/:capitalTransactionId", userHelper.verifyToken, async (req, res) => {
 
     const data = {
-        transactionId : req.params.capitalTransactionId,
-        transactionDetails : req.body.transaction_details,
-        valueCredit : req.body.value_credit,
-        valueDebit : req.body.value_debit
+        transactionId: req.params.capitalTransactionId,
+        transactionDetails: req.body.transaction_details,
+        valueCredit: req.body.value_credit,
+        valueDebit: req.body.value_debit
     }
 
     try {
@@ -78,14 +79,14 @@ router.put("/:capitalTransactionId", userHelper.verifyToken, async (req, res)=>{
 
 
         res.status(200).json(transaction)
-        
+
     } catch (error) {
         res.status(500).json(error)
     }
 })
 
 // Remove a transaction from capital account
-router.delete("/:capitalTransactionId", userHelper.verifyToken, async(req, res)=>{
+router.delete("/:capitalTransactionId", userHelper.verifyToken, async (req, res) => {
     const transactionId = req.params.capitalTransactionId
 
     try {
@@ -94,21 +95,21 @@ router.delete("/:capitalTransactionId", userHelper.verifyToken, async(req, res)=
 
         const isDeleted = await accountCapitalHelper.removeFromCapitalAccount(transactionId)
 
-        if(isDeleted){
+        if (isDeleted) {
             res.status(200).json({
                 Message: "Transaction deleted successfully ",
-                ProductId : transactionId
+                ProductId: transactionId
             })
-        }else{
+        } else {
             res.status(200).json({
                 Message: "Transaction Not found",
-                ProductId : transactionId
+                ProductId: transactionId
             })
         }
 
-        
+
     } catch (error) {
-                res.status(500).json(error)
+        res.status(500).json(error)
 
     }
 
